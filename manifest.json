@@ -14,7 +14,7 @@
   "content_scripts": [
    {
      "matches": ["https://*.youtube.com/*"],
-     "js": ["content.js"],
+     "js": ["/js/content.js"],
      "run_at": "document_start"
    }
   ]
