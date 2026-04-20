@@ -9,3 +9,9 @@ console.log("Content Script Online");
   function getSkipButton(){
     console.log("getSkipButton()");
   }
+
+  window.navigation.addEventListener("navigate", function(event) {
+    console.log("navigate event detected");
+    getCurrentBackgroundURL();
+    getSkipButton();
+  });
