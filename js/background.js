@@ -53,41 +53,8 @@ function sendSkipMsg(){
     });
 }
 
-// chrome.scripting
-//   .registerContentScripts([{
-//     id: "session-script",
-//     js: ["content.js"],
-//     persistAcrossSessions: false,
-//     matches: ["*://youtube.com/*"],
-//     runAt: "document_end",
-//   }])
-//   .then(() => console.log("registration complete"))
-//   .catch((err) => console.warn("unexpected error", err));
-
-// console.log("test");
-
-
-// Recieve message from popup.js&contents.js
-// 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if(changeInfo.status === 'complete'){
-        chrome.scripting.executeScript({
-            target: {tabId : tab.id},
-            files: ["./js/content.js"]
-        })
-        chrome.tabs.sendMessage(tabId, { action: "getURL" }, (response) => {
-                if (response) {
-                    currentBackground = response;
-                    console.log("getURL message sent");
-                    console.log(response);
-                    isBackgroundInList(currentBackground);
-                }
-        });
-    }
-  });
-
-  chrome.runtime.onInstalled.addListener(() => {
-    chrome.storage.local.set({banList : ""}, function(){
-        console.log("Added Successfully");
-    })
-  })
+window.navigation.addEventListener('navigate', function(event) {
+    var URL = event.destination.url;
+    console.log("Navigate to: " + URL);
+    isBackgroundInList(URL);
+});
