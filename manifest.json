@@ -9,10 +9,6 @@
   },
   "permissions": ["tabs", "activeTab", "scripting", "nativeMessaging", "notifications", "storage"],
   "host_permissions": [
-    "https://www.youtube.com/*"
-  ],
-  "background": {
-    "service_worker": "./js/background.js",
-    "type": "module"
-  }
+    "https://www.youtube.com/shorts/*"
+  ]
 }
