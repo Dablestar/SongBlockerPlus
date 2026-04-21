@@ -7,12 +7,21 @@
     "default_popup": "index.html",
     "default_icon": "./src/icon.png"
   },
-  "permissions": ["tabs", "activeTab", "scripting", "nativeMessaging", "notifications", "storage"],
+  "permissions": ["tabs", "activeTab", "scripting", "nativeMessaging", "storage", "webRequest", "webRequest"],
   "host_permissions": [
     "https://www.youtube.com/*"
   ],
-  "background": {
-    "service_worker": "./js/background.js",
-    "type": "module"
+  "content_scripts": [
+   {
+     "matches": ["https://*.youtube.com/*"],
+     "js": ["js/content.js"],
+     "run_at": "document_start"
+   }
+  ],
+  "web_accessible_resources": [
+  {
+    "resources": ["js/injected.js"],
+    "matches": ["https://*.youtube.com/*"]
   }
+]
 }

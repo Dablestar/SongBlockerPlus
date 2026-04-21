@@ -2,52 +2,31 @@ var filePath = "./banList.txt";
 var backgroundURL;
 let banList;
 
-async function getCurrentTab(){
-    let queryOptions = { active: true, currentWindow: true };
-    let [tab] = await chrome.tabs.query(queryOptions);
-    return tab.id;
-}
 
-function addBackgroundOnBanList(URL, id){
-    console.log("addBackgroundOnBanList()");
-    console.log("tabId : " + id);
-    console.log(URL);
-    chrome.storage.local.get('banList', function(data){
-            banList = data.banList;
-            console.log(banList);
-            var newBanList = banList.concat(URL + '\r\n');
-            chrome.storage.local.set({banList : newBanList}, function(){
-                console.log("Added Successfully");
-            })
-    });
-    
-}
 
 document.getElementById("addBtn").addEventListener("click", function() {
-    console.log("btnClicked");
-    getCurrentTab().then(response => {
-        chrome.scripting.executeScript({
-            target: { tabId: response },
-            files: ["./js/content.js"]
-        }).then(() => {
-            // Use a single message to get the URL and then proceed
-            chrome.tabs.sendMessage(response, { action: "getURL" }, (url) => {
-                backgroundURL = url;
-                addBackgroundOnBanList(backgroundURL, response);
-                // After adding URL to ban list, send the skip action
-                chrome.tabs.sendMessage(response, { action: "skip" });
-            });
-        });
-    });
-    // chrome.runtime.sendMessage({action:"requestURL"}, function(response){
-    //     console.log(response);
-    //     backgroundURL = response;
-    //     console.log(backgroundURL);
-    // });
-
+    console.log("Add button clicked");
+    sendBackgroundURLFromContentMsg();
 });
-    
 
-
+function sendBackgroundURLFromContentMsg(){
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+        const activeTab = tabs[0];
+        if (activeTab) {
+            chrome.tabs.sendMessage(activeTab.id, { action: "addToBanList" }, function(response) {
+                if (response && response.sourceTitle && response.sourceURL)
+                {
+                    backgroundURL = response.sourceURL;
+                    console.log("Added URL to BanList from content script:", backgroundURL);
+                } else {
+                    console.log(response);
+                    console.error("No URL received from content script");
+                }
+            });
+        } else {
+            console.error("No active tab found");
+        }
+    });
+}
 
 
