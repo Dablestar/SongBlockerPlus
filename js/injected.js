@@ -1,3 +1,4 @@
+//intercept fetch requests to YouTube's reel_item_watch endpoint to extract source video ID and title, then send it to content script via postMessage
 (function() {
   console.log("injected.js loaded");
  
