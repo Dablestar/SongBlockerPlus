@@ -3,25 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>SongBlocker+</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="contents">
-    <h1>P*nis Music Blocker</h1>
-        <p>Block that<br>
-            P*nis Music<br>
-            from your Youtube Shorts
-        </p>
-        <div class="btnContainer" id="contentBtns">
-            <button class="btn" id="addBtn"><img src="./src/icon_add.svg" alt="addBtn" width="40" height="40"></button>
-            <button class="btn" id="optionBtn"><img src="./src/icon_option.svg" alt="optionBtn" width="40" height="40"></button>
+    <div class="header">
+        <div class="title-row">
+            <h1>SongBlocker+</h1>
+            <button class="btn icon-btn" id="addBtn" title="Add current song to ban list">
+                <img src="./src/icon_add.svg" alt="Add" width="32" height="32">
+            </button>
+        </div>
+        <p id="currentTitle" class="source-info">—</p>
+        <p id="statusMsg" class="status-msg"></p>
+    </div>
+
+    <div class="banlist-section">
+        <div class="banlist-header">
+            <span>Ban List</span>
+            <span id="banCount" class="ban-count">0</span>
+        </div>
+        <div id="banListContainer" class="banlist-container">
+            <p class="empty-msg">No songs blocked yet.</p>
         </div>
     </div>
+
     <footer>
-        <div class="btnContainer" id="footerBtns">
-            <button class="btn" id="twitter"><a href="https://x.com/buru_army_mil" target="_blank"><img src="./src/icon_twitter.svg" alt="twitter" width="40" height="40"></a></button>
-            <button class="btn" id="github"><a href="https://github.com/Dablestar/SongBlocker" target="_blank"><img src="./src/icon_github.svg" alt="github" width="35" height="35"></a></button>
+        <div id="footerBtns">
+            <button class="btn footer-btn" id="twitter">
+                <a href="https://x.com/buru_army_mil" target="_blank">
+                    <img src="./src/icon_twitter.svg" alt="twitter" width="36" height="36">
+                </a>
+            </button>
+            <button class="btn footer-btn" id="github">
+                <a href="https://github.com/Dablestar/SongBlocker" target="_blank">
+                    <img src="./src/icon_github.svg" alt="github" width="32" height="32">
+                </a>
+            </button>
         </div>
         <div id="credit"><p><b>DABURU</b></p></div>
     </footer>
