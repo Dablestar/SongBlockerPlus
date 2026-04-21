@@ -1,6 +1,5 @@
 console.log("Content Script Online");
 
-// Inject injected.js into page context
 const script = document.createElement('script');
 script.src = chrome.runtime.getURL('js/injected.js');
 document.documentElement.appendChild(script);
@@ -11,7 +10,10 @@ let backgroundURL;
 let lastVideoId = null;
 let isSkipping = false;
 
-// Extract source video ID from reel_item_watch response
+// Buffer for REEL_ITEM_WATCH_RESPONSE data that arrived before navigate fired
+// (YouTube sometimes prefetches the next video's watch data)
+const sourceDataBuffer = new Map();
+
 function extractSourceVideoId(data) {
   const panels = data?.engagementPanels ?? [];
   for (const panel of panels) {
@@ -37,10 +39,22 @@ function isExtensionValid() {
   try { return !!chrome.runtime?.id; } catch { return false; }
 }
 
-function checkSourceBanned(){
+function applySourceData(source, url, titleVal) {
+  backgroundSource = source;
+  backgroundURL = url;
+  title = titleVal;
+  chrome.storage.local.set({ sourceTitle: title, sourceURL: backgroundURL });
+  if (source) {
+    console.log("Source video ID:", source.videoId, "| Title:", title);
+  } else {
+    console.log("No audio pivot — using Shorts URL as source:", url);
+  }
+}
+
+function checkSourceBanned() {
   console.log("Checking if current video is in banList...");
-  if (!backgroundURL || !isExtensionValid()){
-    console.log("Skipping check: Invalid extension or background URL not set");
+  if (!backgroundURL || !isExtensionValid()) {
+    console.log("Skipping check: no backgroundURL or extension invalid");
     return;
   }
   const currentURL = backgroundURL;
@@ -54,12 +68,10 @@ function checkSourceBanned(){
   });
 }
 
-function skipVideo(){
+function skipVideo() {
   if (isSkipping) return;
   isSkipping = true;
   setTimeout(() => { isSkipping = false; }, 1500);
-
-  // Dispatch from page context via injected.js for better YouTube compatibility
   window.postMessage({ type: 'SKIP_VIDEO' }, '*');
 }
 
@@ -68,62 +80,70 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log("Received addToBanList message from popup.js");
     chrome.storage.local.get('banList', (result) => {
       const banList = result.banList ?? [];
+
+      if (banList.some(entry => entry.url === backgroundURL)) {
+        sendResponse({ alreadyAdded: true, sourceTitle: title, sourceURL: backgroundURL });
+        return;
+      }
+
       banList.push({ title: title, url: backgroundURL });
       chrome.storage.local.set({ banList });
       skipVideo();
-    });
-    sendResponse({
-      sourceTitle: title,
-      sourceURL: backgroundURL
+      sendResponse({ sourceTitle: title, sourceURL: backgroundURL });
     });
     return true;
   }
 });
 
-// Receive intercepted reel_item_watch response from injected.js
 window.addEventListener('message', function(event) {
   if (event.source !== window) return;
   if (event.data?.type !== 'REEL_ITEM_WATCH_RESPONSE') return;
 
   const data = event.data.data;
+  const shortsVideoId = event.data.shortsVideoId;
   if (data?.status !== 'REEL_ITEM_WATCH_STATUS_SUCCEEDED') return;
 
-  backgroundSource = extractSourceVideoId(data);
-  title = backgroundSource?.title || "Unknown Title";
-  backgroundURL = backgroundSource ? `https://www.youtube.com/watch?v=${backgroundSource.videoId}` : window.location.href;
+  const source = extractSourceVideoId(data);
+  const resolvedTitle = source?.title || "Unknown Title";
+  // Issue 2: for original-audio videos (no audio pivot), use the Shorts URL itself
+  const resolvedURL = source
+    ? `https://www.youtube.com/watch?v=${source.videoId}`
+    : (shortsVideoId ? `https://www.youtube.com/shorts/${shortsVideoId}` : window.location.href);
 
-  chrome.storage.local.set({ sourceTitle: title, sourceURL: backgroundURL });
-
-  if (backgroundSource) {
-    console.log("Source video ID:", backgroundSource.videoId, "| Title:", title);
-  } else {
-    console.log("No audio pivot found in reel_item_watch response");
+  if (shortsVideoId && shortsVideoId !== lastVideoId) {
+    // Response is for a video we haven't navigated to yet — buffer it
+    sourceDataBuffer.set(shortsVideoId, { source, url: resolvedURL, title: resolvedTitle });
+    return;
   }
 
-  // Check ban AFTER backgroundURL is confirmed for the current video
+  applySourceData(source, resolvedURL, resolvedTitle);
   checkSourceBanned();
 });
 
-// Detect URL changes for shorts navigation — reset state to prevent stale backgroundURL checks
 window.navigation.addEventListener("navigate", function(event) {
   const url = new URL(event.destination.url);
   if (!url.pathname.startsWith('/shorts/')) return;
   const videoId = url.pathname.split('/')[2];
 
-  // Ignore duplicate navigate events for the same video
   if (videoId === lastVideoId) return;
   lastVideoId = videoId;
+  isSkipping = false;
 
   console.log("Current Shorts Video ID:", videoId);
 
-  // Reset so checkSourceBanned doesn't run with the previous video's URL
-  backgroundURL = null;
-  backgroundSource = null;
-  title = null;
-  isSkipping = false;
+  // Issue 1: use buffered data if the API response arrived before navigate
+  if (sourceDataBuffer.has(videoId)) {
+    const cached = sourceDataBuffer.get(videoId);
+    sourceDataBuffer.delete(videoId);
+    applySourceData(cached.source, cached.url, cached.title);
+    checkSourceBanned();
+  } else {
+    backgroundURL = null;
+    backgroundSource = null;
+    title = null;
+  }
 });
 
-// Initialize banList if it doesn't exist yet (replaces onInstalled)
 chrome.storage.local.get('banList', (result) => {
   if (!result.banList) chrome.storage.local.set({ banList: [] });
 });

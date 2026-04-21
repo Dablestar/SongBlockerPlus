@@ -1,77 +1,194 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
-*{
+
+* {
     list-style: none;
     text-decoration: none;
     margin: 0;
     padding: 0;
     font-family: "Noto Sans", sans-serif;
+    box-sizing: border-box;
 }
-body{
+
+body {
     width: 350px;
-    height: 250px;
     color: white;
-}
-.contents{
-    position: relative;
-    width: 100%;
-    height: 80%;
     background-color: #191D24;
 }
-h1{
-    font-size: 30px;
-    padding-left: 10px;
-    padding-top: 10px;
+
+/* ── Header ── */
+.header {
+    padding: 12px 14px 10px;
+    background-color: #191D24;
+    border-bottom: 1px solid #2a2f3a;
+}
+
+.title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+h1 {
+    font-size: 22px;
     font-weight: bold;
 }
-.contents > p{
-    padding-left: 10px;
-    font-size: 20px;
-    height: 100px;
+
+.source-info {
+    font-size: 13px;
+    color: #B3B3B3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+    cursor: default;
 }
-footer{
-    width: 100%;
-    height: 20%;
-    background-color: #111318;
+
+.status-msg {
+    font-size: 12px;
+    min-height: 16px;
+    margin-top: 4px;
 }
-footer > p{
-    font-size: 15px;
-}
-.btnContainer{
-    position: relative;
-    width: 30%;
-    height: 50px;
-}
-.btn{
-    margin-top: 5px;
-    margin-left: 10px;
-    width: 40px;
-    height: 40px;
+
+.status-msg.success { color: #4caf7d; }
+.status-msg.error   { color: #e05c5c; }
+
+/* ── Buttons ── */
+.btn {
     background: none;
     border: none;
-    color: #B3B3B3;
+    cursor: pointer;
     border-radius: 5px;
+    padding: 4px;
+    color: #B3B3B3;
 }
-.btn:hover{
+
+.btn:hover {
     background-color: #323946;
-    transition: 0.5s;
+    transition: background-color 0.2s;
 }
-#contentBtns{
-    float: right;
-    margin-right: 20px;
+
+.icon-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
-#footerBtns{
-    float: left;
+
+/* ── Ban list ── */
+.banlist-section {
+    background-color: #191D24;
 }
-#credit{
-    width: 70%;
-    height: 100%;
-    float: right;
+
+.banlist-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 14px;
+    background-color: #111318;
+    font-size: 11px;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #1e2330;
+}
+
+.ban-count {
+    background-color: #2a2f3a;
+    color: #B3B3B3;
+    border-radius: 9px;
+    padding: 1px 7px;
+    font-size: 11px;
+}
+
+.banlist-container {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.banlist-container::-webkit-scrollbar { width: 4px; }
+.banlist-container::-webkit-scrollbar-track { background: #111318; }
+.banlist-container::-webkit-scrollbar-thumb { background: #323946; border-radius: 2px; }
+
+.empty-msg {
+    color: #555;
+    font-size: 13px;
+    text-align: center;
+    padding: 22px 0;
+}
+
+.banlist-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid #1e2330;
+}
+
+.banlist-row:last-child { border-bottom: none; }
+.banlist-row:hover { background-color: #1e2330; }
+
+.banlist-title {
+    flex: 1;
+    font-size: 13px;
+    color: #ccc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+.delete-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: #555;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    line-height: 1;
+}
+
+.delete-btn:hover {
+    color: #e05c5c;
+    background-color: rgba(224, 92, 92, 0.12);
+}
+
+/* ── Footer ── */
+footer {
+    display: flex;
+    align-items: center;
+    height: 46px;
+    background-color: #111318;
+    border-top: 1px solid #1e2330;
+}
+
+#footerBtns {
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+}
+
+.footer-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#credit {
+    flex: 1;
     text-align: right;
-    line-height: 50px;
+    padding-right: 14px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #888;
 }
-#credit p{
-    margin-right: 20px;
-}
-#github img{
-    margin-bottom: 2.5px;
+
+#github img {
+    margin-bottom: 2px;
 }
