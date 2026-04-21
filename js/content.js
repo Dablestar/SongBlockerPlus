@@ -8,6 +8,8 @@ document.documentElement.appendChild(script);
 let backgroundSource;
 let title;
 let backgroundURL;
+let lastVideoId = null;
+let isSkipping = false;
 
 // Extract source video ID from reel_item_watch response
 function extractSourceVideoId(data) {
@@ -38,11 +40,10 @@ function isExtensionValid() {
 function checkSourceBanned(){
   console.log("Checking if current video is in banList...");
   if (!backgroundURL || !isExtensionValid()){
+    console.log("Skipping check: Invalid extension or background URL not set");
     return;
-  }else{
-    console.log("Error: Invalid extension or background URL not set");
   }
-  const currentURL = backgroundURL ? backgroundURL : window.location.href;
+  const currentURL = backgroundURL;
   chrome.storage.local.get('banList', (result) => {
     console.log("Retrieved banList from storage:", result.banList);
     const banList = result.banList ?? [];
@@ -54,29 +55,28 @@ function checkSourceBanned(){
 }
 
 function skipVideo(){
-  document.dispatchEvent(new KeyboardEvent('keydown', {
-    key: 'ArrowDown',
-    keyCode: 40,
-    bubbles: true,
-    cancelable: true
-  }));
+  if (isSkipping) return;
+  isSkipping = true;
+  setTimeout(() => { isSkipping = false; }, 1500);
+
+  // Dispatch from page context via injected.js for better YouTube compatibility
+  window.postMessage({ type: 'SKIP_VIDEO' }, '*');
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "addToBanList") {
-
     console.log("Received addToBanList message from popup.js");
-      chrome.storage.local.get('banList', (result) => {
-        const banList = result.banList ?? [];
-        banList.push({ title: title, url: backgroundURL });
-        chrome.storage.local.set({ banList });
-        skipVideo();
-      });
-      sendResponse({
-        sourceTitle: title,
-        sourceURL: backgroundURL
-      });
-    return true; // Indicates that we will send a response asynchronously
+    chrome.storage.local.get('banList', (result) => {
+      const banList = result.banList ?? [];
+      banList.push({ title: title, url: backgroundURL });
+      chrome.storage.local.set({ banList });
+      skipVideo();
+    });
+    sendResponse({
+      sourceTitle: title,
+      sourceURL: backgroundURL
+    });
+    return true;
   }
 });
 
@@ -99,18 +99,31 @@ window.addEventListener('message', function(event) {
   } else {
     console.log("No audio pivot found in reel_item_watch response");
   }
+
+  // Check ban AFTER backgroundURL is confirmed for the current video
+  checkSourceBanned();
 });
 
-// Detect URL changes for shorts navigation
+// Detect URL changes for shorts navigation — reset state to prevent stale backgroundURL checks
 window.navigation.addEventListener("navigate", function(event) {
   const url = new URL(event.destination.url);
   if (!url.pathname.startsWith('/shorts/')) return;
   const videoId = url.pathname.split('/')[2];
+
+  // Ignore duplicate navigate events for the same video
+  if (videoId === lastVideoId) return;
+  lastVideoId = videoId;
+
   console.log("Current Shorts Video ID:", videoId);
-  checkSourceBanned();
+
+  // Reset so checkSourceBanned doesn't run with the previous video's URL
+  backgroundURL = null;
+  backgroundSource = null;
+  title = null;
+  isSkipping = false;
 });
 
 // Initialize banList if it doesn't exist yet (replaces onInstalled)
 chrome.storage.local.get('banList', (result) => {
-   if(!result.banList) chrome.storage.local.set({ banList: [] });
-  });
+  if (!result.banList) chrome.storage.local.set({ banList: [] });
+});
